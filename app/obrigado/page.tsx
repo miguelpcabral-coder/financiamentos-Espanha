@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 
 export default function Obrigado() {
@@ -5,9 +6,9 @@ export default function Obrigado() {
     <main className="min-h-screen bg-gray-50">
       <header className="bg-brand-900 text-white">
         <div className="max-w-2xl mx-auto px-4 py-5 flex items-center gap-3">
-          <div className="text-xl font-bold tracking-tight">IMPORTRUST</div>
+          <a href="/"><Image src="/logo.png" alt="Importrust" width={140} height={40} style={{ width: 140, height: "auto" }} priority /></a>
           <div className="h-5 w-px bg-white/30" />
-          <div className="text-sm text-white/70">Financiamento España</div>
+          <div className="text-sm text-white/70">Ahorre en la compra de su próximo coche</div>
         </div>
       </header>
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
@@ -18,8 +19,8 @@ export default function Obrigado() {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">¡Solicitud enviada!</h1>
-          <p className="text-gray-500 text-sm max-w-sm mx-auto">
-            Hemos recibido tu solicitud y documentación. Nuestro equipo se pondrá en contacto contigo en breve.
+          <p className="text-gray-500 text-sm max-w-sm mx-auto leading-relaxed">
+            Hemos recibido tus datos y documentación. Vamos a compartirlos con nuestros bancos colaboradores para conseguirte las mejores condiciones. En cuanto tengamos una respuesta, te la comunicaremos lo antes posible.
           </p>
           <Link href="/" className="btn-secondary mt-8 inline-flex">
             ← Nueva solicitud
