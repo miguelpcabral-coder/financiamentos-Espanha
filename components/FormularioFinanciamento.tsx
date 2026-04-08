@@ -203,7 +203,7 @@ export default function FormularioFinanciamento() {
     return e
   }
 
-  function validarDocs(who: PersonaKey) {
+  function validarDocs(who: PersonaKey): Record<string, string> {
     const p = getPersona(who)
     const docs = getDocumentosRequeridos(p.situacion_laboral, p.tipo_contrato, importe)
     const faltantes = docs.filter(d => !p.documentos[d.id]?.some(f => f !== null))
