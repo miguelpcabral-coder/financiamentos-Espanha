@@ -534,7 +534,7 @@ export default function FormularioFinanciamento() {
                 </div>
               </div>
               <div>
-                <label className="label">¿Incluye avalista?</label>
+                <label className="label">Incluye avalista?</label>
                 <div className="flex gap-2">
                   {([false, true] as const).map(v => (
                     <button key={String(v)} type="button" onClick={() => setConAvalista(v)}
