@@ -462,7 +462,7 @@ export default function FormularioFinanciamento() {
         {/* ── Situación financiera ── */}
         <SectionTitle>Situación financiera</SectionTitle>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
           <Field label="Ingresos mensuales netos (€)" required error={err('ingresos_netos')}>
             <input type="number" min="0" className={`input-field ${err('ingresos_netos') ? 'input-error' : ''}`} value={p.ingresos_netos} onChange={ch('ingresos_netos')} placeholder="0" />
           </Field>
