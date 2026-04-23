@@ -34,14 +34,6 @@ export default function Home() {
           <div className="card p-5 flex gap-4">
             <div className="w-9 h-9 rounded-full bg-brand-900 text-white flex items-center justify-center text-sm font-bold shrink-0">2</div>
             <div>
-              <p className="font-medium text-gray-900 text-sm">Datos del vehículo</p>
-              <p className="text-xs text-gray-500 mt-0.5">Marca, modelo, fecha de primera matriculación, precio y plazo de financiamiento deseado.</p>
-            </div>
-          </div>
-
-          <div className="card p-5 flex gap-4">
-            <div className="w-9 h-9 rounded-full bg-brand-900 text-white flex items-center justify-center text-sm font-bold shrink-0">3</div>
-            <div>
               <p className="font-medium text-gray-900 text-sm">Documentación</p>
               <p className="text-xs text-gray-500 mt-0.5 mb-2">Los documentos varían según tu situación laboral. En general necesitaremos:</p>
               <div className="space-y-1">

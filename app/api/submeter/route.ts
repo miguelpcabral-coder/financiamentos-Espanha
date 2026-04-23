@@ -73,14 +73,8 @@ export async function POST(req: NextRequest) {
       .insert({
         // Titular 1 flat columns
         ...t1,
-        // Vehículo
-        marca:               formData.get('marca') as string,
-        modelo:              formData.get('modelo') as string,
-        fecha_matriculacion: (formData.get('fecha_matriculacion') as string) || null,
-        precio:              parseFloat(formData.get('precio') as string),
-        entrada:             parseFloat(formData.get('entrada') as string) || 0,
-        plazo:               parseInt(formData.get('plazo') as string),
-        importe:             parseFloat(formData.get('importe') as string),
+        // Financiamiento
+        importe: parseFloat(formData.get('importe') as string) || 0,
         // Estructura
         num_titulares: numTitulares,
         con_avalista:  conAvalista,
@@ -109,8 +103,7 @@ export async function POST(req: NextRequest) {
           <h2>Nueva solicitud de financiamiento</h2>
           <p><strong>Titular 1:</strong> ${t1.nombre} ${t1.primer_apellido} (${t1.email})</p>
           ${extras.join('')}
-          <p><strong>Vehículo:</strong> ${formData.get('marca')} ${formData.get('modelo')}</p>
-          <p><strong>Importe:</strong> €${parseFloat(formData.get('importe') as string).toLocaleString('es-ES')}</p>
+          <p><strong>Importe a financiar:</strong> €${(parseFloat(formData.get('importe') as string) || 0).toLocaleString('es-ES')}</p>
           <p><strong>Ingresos netos:</strong> €${t1.ingresos_netos?.toLocaleString('es-ES') ?? '—'}/mes (${t1.num_pagas} pagas)</p>
           <p><strong>ID:</strong> ${solicitude?.id}</p>
           <hr/>

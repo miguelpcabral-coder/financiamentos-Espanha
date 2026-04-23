@@ -63,23 +63,15 @@ const emptyPersona = (): PersonaData => ({
   documentos: {},
 })
 
-interface VehiculoData {
-  marca: string; modelo: string
-  fecha_matriculacion_mes: string; fecha_matriculacion_ano: string
-  precio: string; entrada: string; plazo: string
-}
-
 type PersonaKey = 'titular1' | 'titular2' | 'avalista'
 
 type StepDef =
   | { kind: 'info'; who: PersonaKey }
-  | { kind: 'vehiculo' }
   | { kind: 'docs'; who: PersonaKey }
 
 function buildSteps(numTitulares: 1 | 2, conAvalista: boolean): StepDef[] {
   const s: StepDef[] = [
     { kind: 'info', who: 'titular1' },
-    { kind: 'vehiculo' },
     { kind: 'docs', who: 'titular1' },
   ]
   if (numTitulares === 2) { s.push({ kind: 'info', who: 'titular2' }); s.push({ kind: 'docs', who: 'titular2' }) }
@@ -88,11 +80,11 @@ function buildSteps(numTitulares: 1 | 2, conAvalista: boolean): StepDef[] {
 }
 
 const STEP_LABELS: Record<string, string> = {
-  'info-titular1': 'Titular 1', vehiculo: 'Vehículo', 'docs-titular1': 'Docs. T1',
+  'info-titular1': 'Titular 1', 'docs-titular1': 'Docs. T1',
   'info-titular2': 'Titular 2', 'docs-titular2': 'Docs. T2',
   'info-avalista': 'Avalista',  'docs-avalista': 'Docs. Av.',
 }
-const stepKey = (s: StepDef) => s.kind === 'vehiculo' ? 'vehiculo' : `${s.kind}-${s.who}`
+const stepKey = (s: StepDef) => `${s.kind}-${s.who}`
 
 // ── Small helpers ─────────────────────────────────────────────────────────────
 
@@ -121,17 +113,15 @@ export default function FormularioFinanciamento() {
   const [titular1, setTitular1] = useState<PersonaData>(emptyPersona())
   const [titular2, setTitular2] = useState<PersonaData>(emptyPersona())
   const [avalistaData, setAvalistaData] = useState<PersonaData>(emptyPersona())
-  const [vehiculo, setVehiculoData] = useState<VehiculoData>({
-    marca: '', modelo: '', fecha_matriculacion_mes: '', fecha_matriculacion_ano: '',
-    precio: '', entrada: '', plazo: '',
-  })
   const [videoCheck, setVideoCheck] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
 
+  const [valorFinanciar, setValorFinanciar] = useState('')
+
   const steps = buildSteps(numTitulares, conAvalista)
   const currentStep = steps[paso]
-  const importe = parseFloat(vehiculo.precio || '0') - parseFloat(vehiculo.entrada || '0')
+  const importe = parseFloat(valorFinanciar || '0') || 0
 
   // ── Persona helpers ────────────────────────────────────────────────────────
 
@@ -159,11 +149,6 @@ export default function FormularioFinanciamento() {
     })
   }
 
-  function setVehiculoField(field: string, value: string) {
-    setVehiculoData(v => ({ ...v, [field]: value }))
-    setErrors(e => ({ ...e, [field]: '' }))
-  }
-
   // ── Validation ─────────────────────────────────────────────────────────────
 
   function validarPersona(who: PersonaKey) {
@@ -189,17 +174,8 @@ export default function FormularioFinanciamento() {
     if (who === 'titular1') {
       if (!p.iban.trim()) e[`${who}_iban`] = 'Obligatorio'
       if (!videoCheck) e['video_check'] = 'Debes aceptar para continuar'
+      if (!valorFinanciar || parseFloat(valorFinanciar) <= 0) e['importe'] = 'Introduce un importe válido'
     }
-    return e
-  }
-
-  function validarVehiculo() {
-    const e: Record<string, string> = {}
-    if (!vehiculo.marca.trim()) e.marca = 'Obligatorio'
-    if (!vehiculo.modelo.trim()) e.modelo = 'Obligatorio'
-    if (!vehiculo.fecha_matriculacion_mes || !vehiculo.fecha_matriculacion_ano) e.fecha_matriculacion = 'Obligatorio'
-    if (!vehiculo.precio || parseFloat(vehiculo.precio) <= 0) e.precio = 'Introduce un precio válido'
-    if (!vehiculo.plazo || parseInt(vehiculo.plazo) <= 0) e.plazo = 'Introduce un plazo válido'
     return e
   }
 
@@ -215,9 +191,8 @@ export default function FormularioFinanciamento() {
 
   function avancar() {
     let e: Record<string, string> = {}
-    if (currentStep.kind === 'info')     e = validarPersona(currentStep.who)
-    if (currentStep.kind === 'vehiculo') e = validarVehiculo()
-    if (currentStep.kind === 'docs')     e = validarDocs(currentStep.who)
+    if (currentStep.kind === 'info') e = validarPersona(currentStep.who)
+    if (currentStep.kind === 'docs') e = validarDocs(currentStep.who)
     if (Object.keys(e).length) { setErrors(e); return }
     setErrors({})
     if (paso < steps.length - 1) setPaso(p => p + 1)
@@ -271,12 +246,6 @@ export default function FormularioFinanciamento() {
       if (numTitulares === 2) appendPersona(titular2, 't2')
       if (conAvalista)        appendPersona(avalistaData, 'av')
 
-      data.append('marca', vehiculo.marca)
-      data.append('modelo', vehiculo.modelo)
-      data.append('fecha_matriculacion', `${vehiculo.fecha_matriculacion_ano}-${vehiculo.fecha_matriculacion_mes}`)
-      data.append('precio',  vehiculo.precio)
-      data.append('entrada', vehiculo.entrada || '0')
-      data.append('plazo',   vehiculo.plazo)
       data.append('importe', importe.toString())
 
       const appendDocs = (p: PersonaData, prefix: string) => {
@@ -517,6 +486,26 @@ export default function FormularioFinanciamento() {
           </>
         )}
 
+        {/* ── Valor a financiar (solo titular 1) ── */}
+        {isTitular1 && (
+          <>
+            <SectionTitle>Financiamiento</SectionTitle>
+            <Field label="Valor a financiar (€)" required error={errors.importe}>
+              <input
+                type="number"
+                min="0"
+                className={`input-field ${errors.importe ? 'input-error' : ''}`}
+                value={valorFinanciar}
+                onChange={e => { setValorFinanciar(e.target.value); setErrors(er => ({ ...er, importe: '' })) }}
+                placeholder="25000"
+              />
+              {importe >= 30000 && (
+                <p className="text-xs text-amber-600 mt-1">⚠ Importe ≥ 30.000€ — se requerirá Modelo 100</p>
+              )}
+            </Field>
+          </>
+        )}
+
         {/* ── Estructura (solo titular 1) ── */}
         {isTitular1 && (
           <div className="border-t border-gray-100 pt-4 space-y-3">
@@ -550,64 +539,6 @@ export default function FormularioFinanciamento() {
 
         <div className="flex justify-between pt-2">
           {paso > 0 ? <button onClick={retroceder} className="btn-secondary">← Atrás</button> : <div />}
-          <button onClick={avancar} className="btn-primary px-6">Siguiente →</button>
-        </div>
-      </div>
-    )
-  }
-
-  // ── Render: Vehículo step ──────────────────────────────────────────────────
-
-  function renderVehiculoStep() {
-    return (
-      <div className="card p-6 space-y-4">
-        <h2 className="text-base font-semibold text-gray-900">Datos del vehículo</h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Marca" required error={errors.marca}>
-            <input className={`input-field ${errors.marca ? 'input-error' : ''}`} value={vehiculo.marca} onChange={e => setVehiculoField('marca', e.target.value)} placeholder="BMW" />
-          </Field>
-          <Field label="Modelo" required error={errors.modelo}>
-            <input className={`input-field ${errors.modelo ? 'input-error' : ''}`} value={vehiculo.modelo} onChange={e => setVehiculoField('modelo', e.target.value)} placeholder="Serie 3" />
-          </Field>
-        </div>
-
-        <Field label="Fecha 1ª matriculación" required error={errors.fecha_matriculacion}>
-          <div className="flex gap-2">
-            <select className={`input-field ${errors.fecha_matriculacion ? 'input-error' : ''}`} value={vehiculo.fecha_matriculacion_mes} onChange={e => setVehiculoField('fecha_matriculacion_mes', e.target.value)}>
-              <option value="">Mes</option>
-              {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={String(m).padStart(2, '0')}>{String(m).padStart(2, '0')}</option>)}
-            </select>
-            <select className={`input-field ${errors.fecha_matriculacion ? 'input-error' : ''}`} value={vehiculo.fecha_matriculacion_ano} onChange={e => setVehiculoField('fecha_matriculacion_ano', e.target.value)}>
-              <option value="">Año</option>
-              {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map(y => <option key={y} value={String(y)}>{y}</option>)}
-            </select>
-          </div>
-        </Field>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Field label="Precio del vehículo (€)" required error={errors.precio}>
-            <input type="number" min="0" className={`input-field ${errors.precio ? 'input-error' : ''}`} value={vehiculo.precio} onChange={e => setVehiculoField('precio', e.target.value)} placeholder="25000" />
-          </Field>
-          <Field label="Entrada (€)">
-            <input type="number" min="0" className="input-field" value={vehiculo.entrada} onChange={e => setVehiculoField('entrada', e.target.value)} placeholder="0" />
-          </Field>
-          <Field label="Plazo (meses)" required error={errors.plazo}>
-            <input type="number" min="1" max="120" className={`input-field ${errors.plazo ? 'input-error' : ''}`} value={vehiculo.plazo} onChange={e => setVehiculoField('plazo', e.target.value)} placeholder="60" />
-          </Field>
-        </div>
-
-        {vehiculo.precio && (
-          <div className="bg-gray-50 rounded-lg px-4 py-3 text-sm text-gray-600">
-            Importe a financiar:{' '}
-            <span className="font-semibold text-gray-900">
-              {importe.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
-            </span>
-          </div>
-        )}
-
-        <div className="flex justify-between pt-2">
-          <button onClick={retroceder} className="btn-secondary">← Atrás</button>
           <button onClick={avancar} className="btn-primary px-6">Siguiente →</button>
         </div>
       </div>
@@ -709,9 +640,8 @@ export default function FormularioFinanciamento() {
         ))}
       </div>
 
-      {currentStep.kind === 'info'     && renderInfoStep(currentStep.who)}
-      {currentStep.kind === 'vehiculo' && renderVehiculoStep()}
-      {currentStep.kind === 'docs'     && renderDocsStep(currentStep.who)}
+      {currentStep.kind === 'info' && renderInfoStep(currentStep.who)}
+      {currentStep.kind === 'docs' && renderDocsStep(currentStep.who)}
     </div>
   )
 }
