@@ -68,36 +68,51 @@ function Field({ label, value }: { label: string; value?: string | number | null
 
 function PersonaDetail({ data, title }: { data: Record<string, unknown>; title: string }) {
   const fmt = (v: unknown) => (v != null && v !== '' ? String(v) : null)
+  const fmtEur = (v: unknown) => (v != null && v !== '' && Number(v) !== 0) ? `${Number(v).toLocaleString('es-ES')}€` : null
   return (
     <div className="mt-3 pt-3 border-t border-gray-100">
       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">{title}</p>
       <dl className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-3">
-        <Field label="Nome completo" value={[fmt(data.nombre), fmt(data.primer_apellido), fmt(data.segundo_apellido)].filter(Boolean).join(' ')} />
+        {/* Identidad */}
+        <Field label="Nombre" value={fmt(data.nombre)} />
+        <Field label="Primer apellido" value={fmt(data.primer_apellido)} />
+        <Field label="Segundo apellido" value={fmt(data.segundo_apellido)} />
         <Field label="Email" value={fmt(data.email)} />
         <Field label="Teléfono" value={fmt(data.telefono)} />
-        <Field label="NIF/NIE" value={fmt(data.nif)} />
-        <Field label="Tipo documento" value={fmt(data.tipo_documento)} />
-        <Field label="F. emisión doc." value={fmt(data.fecha_emision_doc)} />
-        <Field label="F. caducidad doc." value={fmt(data.fecha_caducidad_doc)} />
         <Field label="Fecha nacimiento" value={fmt(data.fecha_nacimiento)} />
         <Field label="Nacionalidad" value={fmt(data.nacionalidad)} />
         <Field label="País nacimiento" value={fmt(data.pais_nacimiento)} />
+        <Field label="Tipo documento" value={fmt(data.tipo_documento)} />
+        <Field label="NIF/NIE" value={fmt(data.nif)} />
+        <Field label="F. emisión doc." value={fmt(data.fecha_emision_doc)} />
+        <Field label="F. caducidad doc." value={fmt(data.fecha_caducidad_doc)} />
+        {/* Situación personal */}
         <Field label="Estado civil" value={fmt(data.estado_civil)} />
         <Field label="Sit. vivienda" value={fmt(data.situacion_vivienda)} />
         <Field label="Vivienda desde" value={fmt(data.vivienda_desde)} />
         <Field label="Personas a cargo" value={fmt(data.personas_cargo)} />
+        {/* Situación laboral */}
         <Field label="Sit. laboral" value={SITUACION_LABELS[fmt(data.situacion_laboral) ?? ''] ?? fmt(data.situacion_laboral)} />
         <Field label="Tipo contrato" value={fmt(data.tipo_contrato)} />
         <Field label="Empresa" value={fmt(data.empresa)} />
         <Field label="Sector" value={fmt(data.sector_actividad)} />
         <Field label="Profesión" value={fmt(data.profesion)} />
         <Field label="Empleado desde" value={fmt(data.empleo_desde)} />
-        <Field label="Ingresos netos/mes" value={data.ingresos_netos ? `${Number(data.ingresos_netos).toLocaleString('es-ES')}€` : null} />
-        <Field label="Otros ingresos" value={data.otros_ingresos ? `${Number(data.otros_ingresos).toLocaleString('es-ES')}€` : null} />
+        {/* Situación financiera */}
+        <Field label="Ingresos netos/mes" value={fmtEur(data.ingresos_netos)} />
+        <Field label="Otros ingresos" value={fmtEur(data.otros_ingresos)} />
         <Field label="Nº pagas" value={fmt(data.num_pagas)} />
-        <Field label="Alquiler/hipoteca" value={data.alquiler_hipoteca ? `${Number(data.alquiler_hipoteca).toLocaleString('es-ES')}€` : null} />
-        <Field label="Préstamos/créditos" value={data.prestamos_creditos ? `${Number(data.prestamos_creditos).toLocaleString('es-ES')}€` : null} />
+        <Field label="Alquiler/hipoteca" value={fmtEur(data.alquiler_hipoteca)} />
+        <Field label="Préstamos/créditos" value={fmtEur(data.prestamos_creditos)} />
         <Field label="IBAN" value={fmt(data.iban)} />
+        {/* Campos antigos (schema original) */}
+        <Field label="Marca" value={fmt(data.marca)} />
+        <Field label="Modelo" value={fmt(data.modelo)} />
+        <Field label="Nuevo/Usado" value={fmt(data.nuevo_usado)} />
+        <Field label="Fecha matriculación" value={fmt(data.fecha_matriculacion)} />
+        <Field label="Precio vehículo" value={fmtEur(data.precio)} />
+        <Field label="Entrada" value={fmtEur(data.entrada)} />
+        <Field label="Plazo (meses)" value={fmt(data.plazo)} />
       </dl>
     </div>
   )
@@ -206,11 +221,21 @@ export default function SolicitudCard({ s }: { s: Record<string, any> }) {
           {/* Avalista */}
           {avalista && <PersonaDetail title="Avalista" data={avalista} />}
 
-          {/* Importe */}
+          {/* Financiamiento */}
           <div className="mt-4 pt-3 border-t border-gray-100">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Financiamiento</p>
-            <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3">
+            <dl className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-3">
               <Field label="Valor a financiar" value={importe ? `${importe.toLocaleString('es-ES')}€` : null} />
+              <Field label="Nº titulares" value={s.num_titulares ?? null} />
+              <Field label="Con avalista" value={s.con_avalista != null ? (s.con_avalista ? 'Sí' : 'No') : null} />
+              {/* Campos schema original */}
+              <Field label="Marca" value={s.marca ?? null} />
+              <Field label="Modelo" value={s.modelo ?? null} />
+              <Field label="Nuevo/Usado" value={s.nuevo_usado ?? null} />
+              <Field label="Fecha matriculación" value={s.fecha_matriculacion ?? null} />
+              <Field label="Precio vehículo" value={s.precio ? `${Number(s.precio).toLocaleString('es-ES')}€` : null} />
+              <Field label="Entrada" value={s.entrada ? `${Number(s.entrada).toLocaleString('es-ES')}€` : null} />
+              <Field label="Plazo (meses)" value={s.plazo ?? null} />
             </dl>
           </div>
 
