@@ -68,7 +68,7 @@ function Field({ label, value }: { label: string; value?: string | number | null
 
 function PersonaDetail({ data, title }: { data: Record<string, unknown>; title: string }) {
   const fmt = (v: unknown) => (v != null && v !== '' ? String(v) : null)
-  const fmtEur = (v: unknown) => (v != null && v !== '' && Number(v) !== 0) ? `${Number(v).toLocaleString('es-ES')}€` : null
+  const fmtEur = (v: unknown) => (v != null && v !== '') ? `${Number(v).toLocaleString('es-ES')}€` : null
   return (
     <div className="mt-3 pt-3 border-t border-gray-100">
       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">{title}</p>
