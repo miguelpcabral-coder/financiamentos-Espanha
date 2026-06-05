@@ -104,6 +104,26 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
+async function compressImage(file: File, maxSizeMB = 1): Promise<File> {
+  if (!file.type.startsWith('image/')) return file
+  return new Promise((resolve) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      const scale = Math.min(1, Math.sqrt((maxSizeMB * 1024 * 1024) / file.size))
+      canvas.width = img.width * scale
+      canvas.height = img.height * scale
+      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
+      canvas.toBlob((blob) => {
+        URL.revokeObjectURL(url)
+        resolve(blob ? new File([blob], file.name, { type: 'image/jpeg' }) : file)
+      }, 'image/jpeg', 0.8)
+    }
+    img.src = url
+  })
+}
+
 export default function FormularioFinanciamento() {
   const router = useRouter()
   const [paso, setPaso] = useState(0)
@@ -248,17 +268,21 @@ export default function FormularioFinanciamento() {
 
       data.append('importe', importe.toString())
 
-      const appendDocs = (p: PersonaData, prefix: string) => {
+      const appendDocs = async (p: PersonaData, prefix: string) => {
         const docs = getDocumentosRequeridos(p.situacion_laboral, p.tipo_contrato, importe)
         for (const doc of docs) {
-          ;(p.documentos[doc.id] ?? []).forEach((file, i) => {
-            if (file) data.append(`${prefix}_doc_${doc.id}_${i}`, file)
-          })
+          const files = p.documentos[doc.id] ?? []
+          for (let i = 0; i < files.length; i++) {
+            if (files[i]) {
+              const compressed = await compressImage(files[i])
+              data.append(`${prefix}_doc_${doc.id}_${i}`, compressed)
+            }
+          }
         }
       }
-      appendDocs(titular1, 't1')
-      if (numTitulares === 2) appendDocs(titular2, 't2')
-      if (conAvalista)        appendDocs(avalistaData, 'av')
+      await appendDocs(titular1, 't1')
+      if (numTitulares === 2) await appendDocs(titular2, 't2')
+      if (conAvalista)        await appendDocs(avalistaData, 'av')
 
       const res = await fetch('/api/submeter', { method: 'POST', body: data })
       if (!res.ok) throw new Error('Error')
