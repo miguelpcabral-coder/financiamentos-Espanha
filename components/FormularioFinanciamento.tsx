@@ -2,6 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseBrowser = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 import {
   SITUACION_LABORAL_OPTIONS, TIPO_CONTRATO_OPTIONS, TIPO_DOCUMENTO_OPTIONS,
   ESTADO_CIVIL_OPTIONS, SITUACION_VIVIENDA_OPTIONS, SECTOR_ACTIVIDAD_OPTIONS,
@@ -268,27 +274,37 @@ export default function FormularioFinanciamento() {
 
       data.append('importe', importe.toString())
 
-      const appendDocs = async (p: PersonaData, prefix: string) => {
+      const uploadDocs = async (p: PersonaData, prefix: string) => {
         const docs = getDocumentosRequeridos(p.situacion_laboral, p.tipo_contrato, importe)
         for (const doc of docs) {
           const files = p.documentos[doc.id] ?? []
           for (let i = 0; i < files.length; i++) {
-            if (files[i]) {
-              const compressed = await compressImage(files[i])
-              data.append(`${prefix}_doc_${doc.id}_${i}`, compressed)
-            }
+            const file = files[i]
+            if (!file) continue
+            const fileToUpload = file.type.startsWith('image/') ? await compressImage(file) : file
+            const ext = file.name.split('.').pop() || 'bin'
+            const path = `${Date.now()}_${prefix}_${doc.id}_${i}.${ext}`
+            const { error: uploadError } = await supabaseBrowser.storage
+              .from('Financiamentos-docs')
+              .upload(path, fileToUpload, { contentType: fileToUpload.type })
+            if (uploadError) throw new Error(`Upload error: ${uploadError.message}`)
+            const { data: urlData } = supabaseBrowser.storage.from('Financiamentos-docs').getPublicUrl(path)
+            data.append(`${prefix}_doc_${doc.id}_${i}_url`, urlData.publicUrl)
           }
         }
       }
-      await appendDocs(titular1, 't1')
-      if (numTitulares === 2) await appendDocs(titular2, 't2')
-      if (conAvalista)        await appendDocs(avalistaData, 'av')
+      await uploadDocs(titular1, 't1')
+      if (numTitulares === 2) await uploadDocs(titular2, 't2')
+      if (conAvalista)        await uploadDocs(avalistaData, 'av')
 
       const res = await fetch('/api/submeter', { method: 'POST', body: data })
-      if (!res.ok) throw new Error('Error')
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.error || 'Error')
+      }
       router.push('/obrigado')
-    } catch {
-      setErrors({ submit: 'Ocurrió un error. Inténtalo de nuevo.' })
+    } catch (e) {
+      setErrors({ submit: e instanceof Error ? e.message : 'Ocurrió un error. Inténtalo de nuevo.' })
     } finally {
       setLoading(false)
     }

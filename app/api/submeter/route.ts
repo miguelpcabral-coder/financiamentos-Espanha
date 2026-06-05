@@ -47,21 +47,16 @@ export async function POST(req: NextRequest) {
     const numTitulares = parseInt(formData.get('num_titulares') as string || '1')
     const conAvalista  = formData.get('con_avalista') === 'true'
 
-    // Upload documents (prefix: t1_, t2_, av_)
+    // Collect document URLs uploaded directly from the browser
     const docs: Record<string, Record<string, string[]>> = { t1: {}, t2: {}, av: {} }
 
     for (const [key, value] of formData.entries()) {
-      if (!(value instanceof File)) continue
-      const m = key.match(/^(t1|t2|av)_doc_(.+)_(\d+)$/)
+      if (value instanceof File) continue
+      const m = key.match(/^(t1|t2|av)_doc_(.+)_(\d+)_url$/)
       if (!m) continue
       const [, prefix, docId, indexStr] = m
-      const ext  = value.name.split('.').pop() || 'bin'
-      const path = `${Date.now()}_${prefix}_${docId}_${indexStr}.${ext}`
-      const { error: uploadError } = await supabase.storage.from('Financiamentos-docs').upload(path, value, { contentType: value.type })
-      if (uploadError) return NextResponse.json({ error: `Storage error: ${uploadError.message}` }, { status: 500 })
-      const { data: urlData } = supabase.storage.from('Financiamentos-docs').getPublicUrl(path)
       if (!docs[prefix][docId]) docs[prefix][docId] = []
-      docs[prefix][docId][parseInt(indexStr)] = urlData.publicUrl
+      docs[prefix][docId][parseInt(indexStr)] = value as string
     }
 
     const t1 = personaFromForm(formData)
