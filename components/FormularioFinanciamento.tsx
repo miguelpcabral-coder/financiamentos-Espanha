@@ -101,9 +101,9 @@ const stepKey = (s: StepDef) => `${s.kind}-${s.who}`
 
 // ── Small helpers ─────────────────────────────────────────────────────────────
 
-function Field({ label, required, error, children }: { label: string; required?: boolean; error?: string; children: React.ReactNode }) {
+function Field({ label, required, error, className, children }: { label: string; required?: boolean; error?: string; className?: string; children: React.ReactNode }) {
   return (
-    <div>
+    <div className={className}>
       <label className="label">{label}{required && ' *'}</label>
       {children}
       {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
