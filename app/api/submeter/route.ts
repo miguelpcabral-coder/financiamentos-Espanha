@@ -33,6 +33,11 @@ function personaFromForm(formData: FormData, prefix = '') {
     num_pagas:         parseInt(formData.get(k('num_pagas')) as string || '14') || 14,
     alquiler_hipoteca: parseFloat(formData.get(k('alquiler_hipoteca')) as string || '0') || 0,
     prestamos_creditos: parseFloat(formData.get(k('prestamos_creditos')) as string || '0') || 0,
+    tipo_via:      g('tipo_via') || null,
+    nombre_via:    g('nombre_via') || null,
+    numero_via:    g('numero_via') || null,
+    codigo_postal: g('codigo_postal') || null,
+    complemento:   g('complemento') || null,
     iban: g('iban') || null,
   }
 }

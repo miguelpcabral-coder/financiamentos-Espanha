@@ -51,6 +51,12 @@ interface PersonaData {
   num_pagas: string
   alquiler_hipoteca: string
   prestamos_creditos: string
+  // Morada
+  tipo_via: string
+  nombre_via: string
+  numero_via: string
+  codigo_postal: string
+  complemento: string
   // IBAN
   iban: string
   // Docs
@@ -65,6 +71,7 @@ const emptyPersona = (): PersonaData => ({
   estado_civil: '', situacion_vivienda: '', vivienda_desde: '', personas_cargo: '0',
   situacion_laboral: '', tipo_contrato: '', empresa: '', sector_actividad: '', profesion: '', empleo_desde: '',
   ingresos_netos: '', otros_ingresos: '0', num_pagas: '14', alquiler_hipoteca: '0', prestamos_creditos: '0',
+  tipo_via: '', nombre_via: '', numero_via: '', codigo_postal: '', complemento: '',
   iban: '',
   documentos: {},
 })
@@ -189,6 +196,7 @@ export default function FormularioFinanciamento() {
     if (!p.fecha_caducidad_doc) e[`${who}_fecha_caducidad_doc`] = 'Obligatorio'
     req('estado_civil', p.estado_civil); req('situacion_vivienda', p.situacion_vivienda)
     if (!p.vivienda_desde) e[`${who}_vivienda_desde`] = 'Obligatorio'
+    req('tipo_via', p.tipo_via); req('nombre_via', p.nombre_via); req('numero_via', p.numero_via); req('codigo_postal', p.codigo_postal)
     req('situacion_laboral', p.situacion_laboral)
     if (needsProfessionalFields(p.situacion_laboral)) {
       req('tipo_contrato', p.tipo_contrato)
@@ -265,6 +273,11 @@ export default function FormularioFinanciamento() {
         data.append(k('num_pagas'), p.num_pagas)
         data.append(k('alquiler_hipoteca'), p.alquiler_hipoteca)
         data.append(k('prestamos_creditos'), p.prestamos_creditos)
+        data.append(k('tipo_via'), p.tipo_via)
+        data.append(k('nombre_via'), p.nombre_via)
+        data.append(k('numero_via'), p.numero_via)
+        data.append(k('codigo_postal'), p.codigo_postal)
+        data.append(k('complemento'), p.complemento)
         data.append(k('iban'), p.iban)
       }
 
@@ -423,6 +436,33 @@ export default function FormularioFinanciamento() {
           </Field>
         </div>
 
+        {/* ── Dirección ── */}
+        <SectionTitle>Dirección en España</SectionTitle>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Field label="Tipo de vía" required error={err('tipo_via')}>
+            <select className={`input-field ${err('tipo_via') ? 'input-error' : ''}`} value={p.tipo_via} onChange={ch('tipo_via')}>
+              <option value="">Selecciona...</option>
+              {['Calle','Avenida','Paseo','Plaza','Camino','Carretera','Ronda','Travesía','Vía','Urbanización','Callejón','Bulevar','Glorieta','Parque','Polígono'].map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </Field>
+          <Field label="Nombre de la vía" required error={err('nombre_via')} className="sm:col-span-2">
+            <input className={`input-field ${err('nombre_via') ? 'input-error' : ''}`} value={p.nombre_via} onChange={ch('nombre_via')} placeholder="Gran Vía" />
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Field label="Número" required error={err('numero_via')}>
+            <input className={`input-field ${err('numero_via') ? 'input-error' : ''}`} value={p.numero_via} onChange={ch('numero_via')} placeholder="42" />
+          </Field>
+          <Field label="Código postal" required error={err('codigo_postal')}>
+            <input className={`input-field ${err('codigo_postal') ? 'input-error' : ''}`} value={p.codigo_postal} onChange={ch('codigo_postal')} placeholder="28001" maxLength={5} />
+          </Field>
+          <Field label="Complemento">
+            <input className="input-field" value={p.complemento} onChange={ch('complemento')} placeholder="Piso 3, Puerta B" />
+          </Field>
+        </div>
+
         {/* ── Situación profesional ── */}
         <SectionTitle>Situación profesional</SectionTitle>
 
@@ -477,6 +517,12 @@ export default function FormularioFinanciamento() {
           </Field>
           <Field label="Otros ingresos netos (€)" required>
             <input type="number" min="0" className="input-field" value={p.otros_ingresos} onChange={ch('otros_ingresos')} placeholder="0" />
+            {parseFloat(p.otros_ingresos) > 0 && (
+              <p className="mt-1 text-xs text-amber-600 flex items-start gap-1">
+                <span>⚠️</span>
+                <span>Estos ingresos deben poder acreditarse ante la financiera mediante documentación (extractos bancarios, declaración de la renta, etc.).</span>
+              </p>
+            )}
           </Field>
           <Field label="Número de pagas" required>
             <select className="input-field" value={p.num_pagas} onChange={ch('num_pagas')}>
