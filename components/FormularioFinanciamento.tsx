@@ -516,13 +516,13 @@ export default function FormularioFinanciamento() {
             <input type="number" min="0" className={`input-field ${err('ingresos_netos') ? 'input-error' : ''}`} value={p.ingresos_netos} onChange={ch('ingresos_netos')} placeholder="0" />
           </Field>
           <Field label="Otros ingresos netos (€)" required>
-            <input type="number" min="0" className="input-field" value={p.otros_ingresos} onChange={ch('otros_ingresos')} placeholder="0" />
             {parseFloat(p.otros_ingresos) > 0 && (
-              <p className="mt-1 text-xs text-amber-600 flex items-start gap-1">
+              <p className="mb-1 text-xs text-amber-600 flex items-start gap-1">
                 <span>⚠️</span>
                 <span>Estos ingresos deben poder acreditarse ante la financiera mediante documentación (extractos bancarios, declaración de la renta, etc.).</span>
               </p>
             )}
+            <input type="number" min="0" className="input-field" value={p.otros_ingresos} onChange={ch('otros_ingresos')} placeholder="0" />
           </Field>
           <Field label="Número de pagas" required>
             <select className="input-field" value={p.num_pagas} onChange={ch('num_pagas')}>
