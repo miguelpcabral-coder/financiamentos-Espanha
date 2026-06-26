@@ -199,7 +199,7 @@ export default function FormularioFinanciamento() {
     req('tipo_via', p.tipo_via); req('nombre_via', p.nombre_via); req('numero_via', p.numero_via); req('codigo_postal', p.codigo_postal)
     req('situacion_laboral', p.situacion_laboral)
     if (needsProfessionalFields(p.situacion_laboral)) {
-      req('tipo_contrato', p.tipo_contrato)
+      if (p.situacion_laboral !== 'Autónomo') req('tipo_contrato', p.tipo_contrato)
       req('sector_actividad', p.sector_actividad)
       req('profesion', p.profesion)
       if (!p.empleo_desde) e[`${who}_empleo_desde`] = 'Obligatorio'
@@ -476,12 +476,14 @@ export default function FormularioFinanciamento() {
         {showProfessional && (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="Tipo de contrato" required error={err('tipo_contrato')}>
-                <select className={`input-field ${err('tipo_contrato') ? 'input-error' : ''}`} value={p.tipo_contrato} onChange={ch('tipo_contrato')}>
-                  <option value="">Selecciona...</option>
-                  {TIPO_CONTRATO_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
-              </Field>
+              {p.situacion_laboral !== 'Autónomo' && (
+                <Field label="Tipo de contrato" required error={err('tipo_contrato')}>
+                  <select className={`input-field ${err('tipo_contrato') ? 'input-error' : ''}`} value={p.tipo_contrato} onChange={ch('tipo_contrato')}>
+                    <option value="">Selecciona...</option>
+                    {TIPO_CONTRATO_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </Field>
+              )}
               <Field label="Empresa">
                 <input className="input-field" value={p.empresa} onChange={ch('empresa')} placeholder="Nombre de la empresa" />
               </Field>

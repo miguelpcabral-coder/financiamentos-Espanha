@@ -2,6 +2,7 @@
 
 export const SITUACION_LABORAL_OPTIONS = [
   'Ama de casa',
+  'Autónomo',
   'Cuenta ajena',
   'Desempleado con prestación',
   'Desempleado sin prestación',
@@ -92,7 +93,7 @@ export const PAISES_OPTIONS = [
 
 /** Whether this situacion_laboral requires professional fields (contrato, empresa, etc.) */
 export function needsProfessionalFields(situacion: string): boolean {
-  return situacion === 'Cuenta ajena' || situacion === 'Empleado público'
+  return situacion === 'Cuenta ajena' || situacion === 'Empleado público' || situacion === 'Autónomo'
 }
 
 const TEMP_CONTRACTS = ['En prácticas / Becario', 'Fijo discontinuo', 'Temporal/obra y servicio']
@@ -109,6 +110,12 @@ export interface DocumentoRequerido {
   descripcion?: string
 }
 
+const MODELO100_SITUACIONES = [
+  'Autónomo', 'Cuenta ajena', 'Empleado público', 'Desempleado con prestación',
+  'Jubilado', 'Otras pensiones', 'Pensionista Incapacidad', 'Pensionista Orfandad',
+  'Pensionista Viudedad', 'Pre-Jubilado',
+]
+
 export function getDocumentosRequeridos(
   situacion: string,
   tipoContrato: string,
@@ -116,25 +123,31 @@ export function getDocumentosRequeridos(
 ): DocumentoRequerido[] {
   const docs: DocumentoRequerido[] = [
     { id: 'nif', label: 'DNI/NIE', descripcion: 'Documento Nacional de Identidad o Número de Identificación de Extranjero' },
+    { id: 'justificante_cuenta', label: 'Justificante de cuenta bancaria', descripcion: 'Extracto o certificado bancario con IBAN a nombre del titular' },
   ]
-  const alto = importe > 30000
+
+  if (situacion === 'Autónomo') {
+    docs.push({ id: 'modelo130', label: 'Modelo 130 (1T)', descripcion: 'Pago fraccionado del IRPF — 1er trimestre' })
+    docs.push({ id: 'modelo100', label: 'Modelo 100 (IRPF)' })
+  }
 
   if (situacion === 'Cuenta ajena' || situacion === 'Empleado público') {
     docs.push({ id: 'nomina', label: 'Nómina del mes anterior' })
     if (TEMP_CONTRACTS.includes(tipoContrato)) {
       docs.push({ id: 'vida_laboral', label: 'Vida Laboral' })
     }
-    if (alto) docs.push({ id: 'modelo100', label: 'Modelo 100 (IRPF)' })
+    docs.push({ id: 'modelo100', label: 'Modelo 100 (IRPF)' })
   }
 
   if (isPensionista(situacion)) {
     docs.push({ id: 'justificante_pension', label: 'Justificante de pensión / Apunte en cuenta' })
-    if (alto) docs.push({ id: 'modelo100', label: 'Modelo 100 (IRPF)' })
+    docs.push({ id: 'modelo100', label: 'Modelo 100 (IRPF)' })
   }
 
   if (situacion === 'Desempleado con prestación') {
     docs.push({ id: 'justificante_prestacion', label: 'Justificante de prestación por desempleo' })
     docs.push({ id: 'vida_laboral', label: 'Vida Laboral' })
+    docs.push({ id: 'modelo100', label: 'Modelo 100 (IRPF)' })
   }
 
   if (situacion === 'Desempleado sin prestación') {
