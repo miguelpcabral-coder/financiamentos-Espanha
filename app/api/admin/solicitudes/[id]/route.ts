@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
 import { cookies } from 'next/headers'
 
-function isAuthorized() {
-  const cookieStore = cookies()
+async function isAuthorized() {
+  const cookieStore = await cookies()
   return cookieStore.get('admin_auth')?.value === process.env.ADMIN_PASSWORD
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!isAuthorized()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!await isAuthorized()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
   const supabase = createAdminClient()
@@ -18,7 +18,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!isAuthorized()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!await isAuthorized()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
   const body = await req.json()
