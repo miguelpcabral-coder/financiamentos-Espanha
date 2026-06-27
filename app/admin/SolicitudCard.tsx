@@ -1,6 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+
+const STATUS_OPTIONS = [
+  { value: 'pendente',    label: 'Pendente',      color: 'bg-yellow-100 text-yellow-800' },
+  { value: 'em_analise', label: 'Em análise',     color: 'bg-blue-100 text-blue-800' },
+  { value: 'aprovado',   label: 'Aprovado',       color: 'bg-green-100 text-green-800' },
+  { value: 'recusado',   label: 'Recusado',       color: 'bg-red-100 text-red-800' },
+]
 
 const SITUACION_LABELS: Record<string, string> = {
   empleado_fijo: 'Empleado Fijo',
@@ -130,8 +138,33 @@ function safeDocMap(raw: unknown): Record<string, string[]> {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function SolicitudCard({ s }: { s: Record<string, any> }) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [expandError, setExpandError] = useState(false)
+  const [status, setStatus] = useState<string>(s.status ?? 'pendente')
+  const [savingStatus, setSavingStatus] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+
+  const statusInfo = STATUS_OPTIONS.find(o => o.value === status) ?? STATUS_OPTIONS[0]
+
+  async function handleStatusChange(newStatus: string) {
+    setSavingStatus(true)
+    setStatus(newStatus)
+    await fetch(`/api/admin/solicitudes/${s.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    })
+    setSavingStatus(false)
+  }
+
+  async function handleDelete() {
+    setDeleting(true)
+    const res = await fetch(`/api/admin/solicitudes/${s.id}`, { method: 'DELETE' })
+    if (res.ok) router.refresh()
+    else setDeleting(false)
+  }
 
   const importe = parseFloat(s.importe || 0)
   const rawDocs = s.documentos
@@ -145,15 +178,15 @@ export default function SolicitudCard({ s }: { s: Record<string, any> }) {
   const avalista = s.avalista && typeof s.avalista === 'object' ? s.avalista as Record<string, unknown> : null
 
   return (
-    <div className="card overflow-hidden">
+    <div className={`card overflow-hidden ${deleting ? 'opacity-50 pointer-events-none' : ''}`}>
       {/* Header — always visible, clickable */}
-      <button
-        type="button"
-        onClick={() => { setExpandError(false); setOpen(o => !o) }}
-        className="w-full text-left p-5 hover:bg-gray-50 transition-colors"
-      >
+      <div className="p-5">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-          <div className="flex-1">
+          <button
+            type="button"
+            onClick={() => { setExpandError(false); setOpen(o => !o) }}
+            className="flex-1 text-left hover:opacity-80 transition-opacity"
+          >
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="font-semibold text-gray-900">
                 {s.nombre} {s.primer_apellido} {s.segundo_apellido}
@@ -173,8 +206,65 @@ export default function SolicitudCard({ s }: { s: Record<string, any> }) {
               <span>{s.telefono}</span>
               <span>DNI/NIE: <span className="font-medium text-gray-700">{s.nif}</span></span>
             </div>
-          </div>
-          <div className="flex items-center gap-4 shrink-0">
+          </button>
+
+          <div className="flex items-center gap-3 shrink-0">
+            {/* Status selector */}
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusInfo.color}`}>
+                {statusInfo.label}
+              </span>
+              <select
+                value={status}
+                onChange={e => handleStatusChange(e.target.value)}
+                disabled={savingStatus}
+                className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-700 cursor-pointer disabled:opacity-50"
+                onClick={e => e.stopPropagation()}
+              >
+                {STATUS_OPTIONS.map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Delete button */}
+            {confirmDelete ? (
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-red-600">Tens a certeza?</span>
+                <button
+                  onClick={handleDelete}
+                  className="text-xs bg-red-600 text-white px-2 py-1 rounded-lg hover:bg-red-700"
+                >Apagar</button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-lg hover:bg-gray-200"
+                >Cancelar</button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                title="Apagar"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            )}
+
+            {/* Expand chevron */}
+            <button
+              type="button"
+              onClick={() => { setExpandError(false); setOpen(o => !o) }}
+            >
+              <svg
+                className={`w-5 h-5 text-gray-400 transition-transform shrink-0 ${open ? 'rotate-180' : ''}`}
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
             <div className="text-right">
               <p className="text-lg font-bold text-gray-900">
                 {importe.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
@@ -183,15 +273,9 @@ export default function SolicitudCard({ s }: { s: Record<string, any> }) {
                 {new Date(s.created_at).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })}
               </p>
             </div>
-            <svg
-              className={`w-5 h-5 text-gray-400 transition-transform shrink-0 ${open ? 'rotate-180' : ''}`}
-              fill="none" stroke="currentColor" viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
           </div>
         </div>
-      </button>
+      </div>
 
       {/* Expanded detail */}
       {open && expandError && (
