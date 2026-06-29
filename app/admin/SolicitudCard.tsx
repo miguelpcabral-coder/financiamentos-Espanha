@@ -22,8 +22,10 @@ const DOC_LABELS: Record<string, string> = {
   nomina:               'Nómina',
   modelo100:            'Modelo 100',
   vida_laboral:         'Vida Laboral',
-  modelo130:            'Modelo 130/131',
+  modelo130:            'Modelo 130 (1T)',
   justificante_pension: 'Justificante pensión',
+  justificante_cuenta:  'Justificante cuenta bancaria',
+  justificante_prestacion: 'Justificante prestación',
 }
 
 function DocButton({ url, label }: { url: string; label: string }) {
@@ -99,6 +101,17 @@ function PersonaDetail({ data, title }: { data: Record<string, unknown>; title: 
         <Field label="Sit. vivienda" value={fmt(data.situacion_vivienda)} />
         <Field label="Vivienda desde" value={fmt(data.vivienda_desde)} />
         <Field label="Personas a cargo" value={fmt(data.personas_cargo)} />
+        {/* Dirección */}
+        {(data.tipo_via || data.nombre_via) && (
+          <div className="col-span-2 sm:col-span-3 lg:col-span-4">
+            <dt className="text-xs text-gray-400">Dirección</dt>
+            <dd className="text-sm font-medium text-gray-800">
+              {[data.tipo_via, data.nombre_via, data.numero_via].filter(Boolean).join(' ')}
+              {data.complemento ? `, ${data.complemento}` : ''}
+              {data.codigo_postal ? ` — CP ${data.codigo_postal}` : ''}
+            </dd>
+          </div>
+        )}
         {/* Situación laboral */}
         <Field label="Sit. laboral" value={SITUACION_LABELS[fmt(data.situacion_laboral) ?? ''] ?? fmt(data.situacion_laboral)} />
         <Field label="Tipo contrato" value={fmt(data.tipo_contrato)} />
@@ -297,6 +310,8 @@ export default function SolicitudCard({ s }: { s: Record<string, any> }) {
             profesion: s.profesion, empleo_desde: s.empleo_desde,
             ingresos_netos: s.ingresos_netos, otros_ingresos: s.otros_ingresos, num_pagas: s.num_pagas,
             alquiler_hipoteca: s.alquiler_hipoteca, prestamos_creditos: s.prestamos_creditos, iban: s.iban,
+            tipo_via: s.tipo_via, nombre_via: s.nombre_via, numero_via: s.numero_via,
+            codigo_postal: s.codigo_postal, complemento: s.complemento,
           }} />
 
           {/* Titular 2 */}
