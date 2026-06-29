@@ -2,12 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseBrowser = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 import {
   SITUACION_LABORAL_OPTIONS, TIPO_CONTRATO_OPTIONS, TIPO_DOCUMENTO_OPTIONS,
   ESTADO_CIVIL_OPTIONS, SITUACION_VIVIENDA_OPTIONS, SECTOR_ACTIVIDAD_OPTIONS,
@@ -309,12 +303,25 @@ export default function FormularioFinanciamento() {
             const fileToUpload = file.type.startsWith('image/') ? await compressImage(file) : file
             const ext = file.name.split('.').pop() || 'bin'
             const path = `${Date.now()}_${prefix}_${doc.id}_${i}.${ext}`
-            const { error: uploadError } = await supabaseBrowser.storage
-              .from('Financiamentos-docs')
-              .upload(path, fileToUpload, { contentType: fileToUpload.type })
-            if (uploadError) throw new Error(`Upload error: ${uploadError.message}`)
-            const { data: urlData } = supabaseBrowser.storage.from('Financiamentos-docs').getPublicUrl(path)
-            data.append(`${prefix}_doc_${doc.id}_${i}_url`, urlData.publicUrl)
+
+            // Get signed upload URL from our API
+            const signRes = await fetch('/api/sign-upload', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ path, contentType: fileToUpload.type }),
+            })
+            if (!signRes.ok) throw new Error('Error al preparar la subida del archivo')
+            const { signedUrl, publicUrl } = await signRes.json()
+
+            // Upload directly to Supabase using the signed URL
+            const uploadRes = await fetch(signedUrl, {
+              method: 'PUT',
+              headers: { 'Content-Type': fileToUpload.type },
+              body: fileToUpload,
+            })
+            if (!uploadRes.ok) throw new Error('Error al subir el archivo')
+
+            data.append(`${prefix}_doc_${doc.id}_${i}_url`, publicUrl)
           }
         }
       }
