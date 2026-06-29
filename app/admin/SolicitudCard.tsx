@@ -102,13 +102,13 @@ function PersonaDetail({ data, title }: { data: Record<string, unknown>; title: 
         <Field label="Vivienda desde" value={fmt(data.vivienda_desde)} />
         <Field label="Personas a cargo" value={fmt(data.personas_cargo)} />
         {/* Dirección */}
-        {(data.tipo_via || data.nombre_via) && (
+        {(fmt(data.tipo_via) || fmt(data.nombre_via)) && (
           <div className="col-span-2 sm:col-span-3 lg:col-span-4">
             <dt className="text-xs text-gray-400">Dirección</dt>
             <dd className="text-sm font-medium text-gray-800">
-              {[data.tipo_via, data.nombre_via, data.numero_via].filter(Boolean).join(' ')}
-              {data.complemento ? `, ${data.complemento}` : ''}
-              {data.codigo_postal ? ` — CP ${data.codigo_postal}` : ''}
+              {[fmt(data.tipo_via), fmt(data.nombre_via), fmt(data.numero_via)].filter(Boolean).join(' ')}
+              {fmt(data.complemento) ? `, ${fmt(data.complemento)}` : ''}
+              {fmt(data.codigo_postal) ? ` — CP ${fmt(data.codigo_postal)}` : ''}
             </dd>
           </div>
         )}
