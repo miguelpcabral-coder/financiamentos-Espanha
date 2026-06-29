@@ -101,13 +101,25 @@ const stepKey = (s: StepDef) => `${s.kind}-${s.who}`
 
 // ── Small helpers ─────────────────────────────────────────────────────────────
 
-function Field({ label, required, error, className, children }: { label: string; required?: boolean; error?: string; className?: string; children: React.ReactNode }) {
+function Field({ label, required, error, className, children }: { label: React.ReactNode; required?: boolean; error?: string; className?: string; children: React.ReactNode }) {
   return (
     <div className={className}>
       <label className="label">{label}{required && ' *'}</label>
       {children}
       {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
     </div>
+  )
+}
+
+function InfoTooltip({ text }: { text: string }) {
+  return (
+    <span className="relative group inline-flex items-center ml-1 align-middle">
+      <span className="w-4 h-4 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold flex items-center justify-center cursor-help border border-blue-300">i</span>
+      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 hidden group-hover:block z-50 shadow-lg leading-relaxed">
+        {text}
+        <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800" />
+      </span>
+    </span>
   )
 }
 
@@ -517,7 +529,7 @@ export default function FormularioFinanciamento() {
           <Field label="Ingresos mensuales netos (€)" required error={err('ingresos_netos')}>
             <input type="number" min="0" className={`input-field ${err('ingresos_netos') ? 'input-error' : ''}`} value={p.ingresos_netos} onChange={ch('ingresos_netos')} placeholder="0" />
           </Field>
-          <Field label="Otros ingresos netos (€)" required>
+          <Field label={<>Otros ingresos netos (€)<InfoTooltip text="Ingresos adicionales al salario del trabajo: alquileres, pensiones, dividendos, etc. Solo incluir si puede acreditarse ante la financiera." /></>} required>
             {parseFloat(p.otros_ingresos) > 0 && (
               <p className="mb-1 text-xs text-amber-600 flex items-start gap-1">
                 <span>⚠️</span>
@@ -534,10 +546,10 @@ export default function FormularioFinanciamento() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Alquiler o hipoteca (€/mes)" required>
+          <Field label={<>Alquiler o hipoteca (€/mes)<InfoTooltip text="Importe mensual que paga por su vivienda habitual, ya sea alquiler o cuota de hipoteca." /></>} required>
             <input type="number" min="0" className="input-field" value={p.alquiler_hipoteca} onChange={ch('alquiler_hipoteca')} placeholder="0" />
           </Field>
-          <Field label="Préstamos o créditos (€/mes)" required>
+          <Field label={<>Préstamos o créditos (€/mes)<InfoTooltip text="Suma mensual de otros préstamos o créditos que tenga activos (coche, personal, tarjetas, etc.). No incluir la hipoteca o alquiler de la vivienda." /></>} required>
             <input type="number" min="0" className="input-field" value={p.prestamos_creditos} onChange={ch('prestamos_creditos')} placeholder="0" />
           </Field>
         </div>
